@@ -1,0 +1,7 @@
+module.exports = {
+    server: 'irc.somewhere.org',
+    channels: ['#chan'],
+    nick: 'horsejs',
+    userName: 'horsejs',
+    realName: 'horsejs',
+}
