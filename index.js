@@ -8,12 +8,15 @@ function ignore(from) {
 
 function getTweet(cb) {
     request({
-        uri: "http://javascript.horse"
+        uri: "http://javascript.horse/random.json"
     }, function(err, resp, body) {
-        var sub = body.substr(body.indexOf('tweet-text'), 1000);
-        sub = sub.substr(12, 1000);
-        sub = sub.substr(0, sub.indexOf('</p>'));
-        cb(sub);
+        var json;
+        try {
+            json = JSON.parse(body);
+        } catch (err) {
+            cb('Error when retrieving the json feed:'+ err);
+        }
+        cb(json.text);
     });
 }
 
