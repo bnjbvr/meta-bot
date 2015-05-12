@@ -56,14 +56,14 @@ function horsejs(client)
     var keywordMap = {};
 
     const KNOWN_KEYWORDS = ['ember', 'node', 'react', 'angular', 'jquery', 'backbone', 'meteor',
-        'mozilla', 'chrome', 'crockford', 'eich', 'rhino', 'spidermonkey', 'v8', 'spartan',
-        'chakra', 'webkit', 'blink', 'jsc'];
+        'crockford', 'eich', 'rhino', 'spidermonkey', 'v8', 'spartan', 'chakra', 'webkit', 'blink',
+        'jsc'];
 
-    const PRE_LOADED_TWEETS = 100;
+    const PRE_LOADED_TWEETS = config.preloadTweets;
+    const DEFAULT_CENSORSHIP_PERIOD = config.defaultCensorshipPeriod;
+    var censorshipMap = config.censorshipPeriodMap;
 
-    const CENSORSHIP_PERIOD = 60000; // ms
-
-    var shutup = false;
+    var shutupMap = {};
 
     function maybeCacheTweet(tweet) {
         for (var j = 0; j < KNOWN_KEYWORDS.length; j++) {
@@ -74,6 +74,14 @@ function horsejs(client)
                 keywordMap[keyword].push(tweet);
             }
         }
+    }
+
+    function setCensorship(chan) {
+        var censorshipPeriod = censorshipMap[chan] || DEFAULT_CENSORSHIP_PERIOD;
+        shutupMap[chan] = true;
+        setTimeout(function() {
+            shutupMap[chan] = false;
+        }, censorshipPeriod);
     }
 
     repeatPromise(getTweet, PRE_LOADED_TWEETS).then(function(tweets) {
@@ -87,35 +95,29 @@ function horsejs(client)
         console.log('setting up client');
 
         client.addListener('message', function (from, chan, message) {
-            if (ignore(from))
+            if (ignore(from) || shutupMap[chan])
                 return;
 
             if (message.indexOf('horsejs') !== -1) {
+
+                if (message.indexOf('shut up') !== -1 || message.indexOf('shutup') !== -1) {
+                    setCensorship(chan);
+                    return;
+                }
+
                 getTweet().then(function (tweet) {
                     client.say(chan, tweet);
                 }).catch(function(err) {
                     client.say(chan, 'Internal error:' + err)
                 });
-            }
-
-            if (shutup) {
-                console.log('i should shut up!');
                 return;
             }
 
-            console.log('lets find something neat...');
             for (var kw in keywordMap) {
                 if (message.toLowerCase().indexOf(kw) !== -1) {
                     var tweets = keywordMap[kw];
-
-                    console.log('Found something!');
                     client.say(chan, tweets[Math.random() * tweets.length | 0]);
-
-                    setTimeout(function() {
-                        shutup = false;
-                    }, CENSORSHIP_PERIOD);
-
-                    shutup = true;
+                    setCensorship(chan);
                     break;
                 }
             }
