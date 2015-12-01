@@ -1,16 +1,30 @@
-const MINUTES = 1000 * 60; // ms
+const SECONDS = 1000; // ms
+const MINUTES = SECONDS * 60;
 const HOURS = MINUTES * 60;
 
 module.exports = {
-    server: 'irc.somewhere.org',
-    channels: ['#chan'],
-    nick: 'horsejs',
-    userName: 'horsejs',
-    realName: 'horsejs',
-    censorshipPeriodMap: {
-        '#chan': 4 * HOURS
-    },
-    defaultCensorshipPeriod: 5 * MINUTES,
-    preloadTweets: 100
-}
+    server: 'irc.freenode.org',
+    channels: ['#horsejs'],
 
+    owner: 'bnjbvr',
+
+    nick: 'horsejs',
+    userName: 'chevaljs',
+    realName: 'chevaljs',
+
+    censorship: {
+        periodMap: {
+            '#horsejs': 5 * SECONDS
+        },
+        defaultPeriod: 10 * SECONDS
+    },
+
+    horsejs: {
+        preloadTweets: 100
+    },
+
+    karma: {
+        filename: 'karma.dat',
+        debouncing_rate: 1 * MINUTES
+    }
+}
