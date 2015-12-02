@@ -6,8 +6,9 @@ var horse = require('./horse')(config);
 var karma = require('./karma')(config);
 var bodyguard = require('./bodyguard')(config, karma);
 var censorship = require('./censorship')(config);
+var quotes = require('./quote')(config);
 
-var extensions = [bodyguard, karma, censorship, horse];
+var extensions = [bodyguard, karma, censorship, quotes, horse];
 
 var ignorees = ['mrgiggles', config.nick];
 function ignore(from) {

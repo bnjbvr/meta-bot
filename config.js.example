@@ -26,5 +26,9 @@ module.exports = {
     karma: {
         filename: 'karma.dat',
         debouncing_rate: 1 * MINUTES
+    },
+
+    quotes: {
+        backlog_memory: 10
     }
 }

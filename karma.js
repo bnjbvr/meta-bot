@@ -1,4 +1,4 @@
-var fs = require('fs');
+var utils = require('./utils');
 
 var FILENAME;
 var KARMAS = {};
@@ -9,7 +9,7 @@ var DEBOUNCING_RATE = 5000; // ms
 function loadKarmas() {
     var content;
     try {
-        content = fs.readFileSync(FILENAME, {flag: 'a+', encoding: 'utf-8'}) || '{}';
+        content = utils.readFile(FILENAME) || '{}';
         KARMAS = JSON.parse(content);
     } catch(e) {
         console.error("when loading karmas:", e.message, e.stack);
@@ -17,10 +17,7 @@ function loadKarmas() {
 }
 
 function writeKarmas() {
-    fs.writeFile(FILENAME, JSON.stringify(KARMAS), {flag: 'w+', encoding: 'utf-8'}, function(err) {
-        if (err)
-            console.error("when writing karmas: ", err.message, err.stack);
-    });
+    utils.writeFileAsync(FILENAME, JSON.stringify(KARMAS));
 }
 
 module.exports = function(config) {
