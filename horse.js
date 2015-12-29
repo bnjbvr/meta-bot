@@ -1,7 +1,9 @@
 var request = require('request');
 
-var KNOWN_FRAMEWORKS = ['ember', 'node', 'react', 'angular', 'jquery', 'backbone', 'meteor'];
-var KNOWN_KEYWORDS = ['crockford', 'eich', 'rhino', 'spidermonkey', 'v8', 'spartan', 'chakra', 'webkit', 'blink', 'jsc'];
+var KNOWN_FRAMEWORKS = ['react', 'angular', 'jquery', 'backbone', 'meteor'];
+var KNOWN_KEYWORDS = ['ember.js', 'emberjs', 'node.js', 'nodejs', 'crockford',
+                      'eich', 'rhino', 'spidermonkey', 'v8', 'spartan',
+                      'chakra', 'webkit', 'blink', 'jsc', 'turbofan'];
 var PRE_LOADED_TWEETS = 10;
 var TWEETS = [];
 
