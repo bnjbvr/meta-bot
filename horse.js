@@ -11,6 +11,7 @@ var OWNER = '';
 var NICK = '';
 
 var SET_CENSORSHIP = null;
+function DUMMY_CALLBACK() {};
 
 module.exports = function(config, censorship) {
     for (var i = 0; i < KNOWN_FRAMEWORKS.length; i++) {
