@@ -62,8 +62,8 @@ function isBlocked(from, who) {
 function karmabot(from, chan, message, say, next) {
     var who;
 
-    if (message.indexOf('karma') === 0) {
-        who = message.split('karma')[1];
+    if (message.indexOf('!karma') === 0) {
+        who = message.split('!karma')[1];
         if (!who)
             return next();
         who = who.trim().split(' ')[0];
@@ -94,7 +94,6 @@ function karmabot(from, chan, message, say, next) {
         }
 
         if (isBlocked(from, who)) {
-            say(chan, "too many karma actions towards " + who + " from " + from + ", aborting");
             return next();
         }
 
