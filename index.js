@@ -2,11 +2,12 @@ var irc = require('irc');
 
 var config = require('./config');
 
-var horse = require('./horse')(config);
 var karma = require('./karma')(config);
-var bodyguard = require('./bodyguard')(config, karma);
 var censorship = require('./censorship')(config);
 var quotes = require('./quote')(config);
+
+var bodyguard = require('./bodyguard')(config, karma);
+var horse = require('./horse')(config, censorship);
 
 var extensions = [bodyguard, karma, censorship, quotes, horse];
 

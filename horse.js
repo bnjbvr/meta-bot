@@ -10,7 +10,9 @@ var TWEETS = [];
 var OWNER = '';
 var NICK = '';
 
-module.exports = function(config) {
+var SET_CENSORSHIP = null;
+
+module.exports = function(config, censorship) {
     for (var i = 0; i < KNOWN_FRAMEWORKS.length; i++) {
         var fw = KNOWN_FRAMEWORKS[i];
         KNOWN_KEYWORDS.push(fw + 'js');
@@ -31,6 +33,10 @@ module.exports = function(config) {
     }, function(err) {
         console.error('error when preloading tweets:', err.message, err.stack);
     });
+
+    SET_CENSORSHIP = function(chan) {
+        return censorship(Math.random(), chan, NICK + ' shut up', DUMMY_CALLBACK, DUMMY_CALLBACK);
+    };
 
     return horsejs;
 }
@@ -88,6 +94,7 @@ function horsejs(from, chan, message, say, next)
         getTweet().then(function (tweet) {
             maybeCacheTweet(tweet);
             say(chan, tweet);
+            SET_CENSORSHIP(chan);
         }).catch(function(err) {
             say(OWNER, 'Internal error:' + err)
         });
@@ -102,6 +109,7 @@ function horsejs(from, chan, message, say, next)
         var tweets = KEYWORD_MAP[kw];
         var index = Math.random() * tweets.length | 0;
         say(chan, tweets[index]);
+        SET_CENSORSHIP(chan);
         tweets.splice(index, 1);
         // Don't call next.
         return;

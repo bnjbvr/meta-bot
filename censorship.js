@@ -15,23 +15,26 @@ module.exports = function(config) {
 
 var SHUTUPMAP = {};
 
+function set(chan) {
+    var censorshipPeriod = CENSORSHIP_MAP[chan] || DEFAULT_CENSORSHIP_PERIOD;
+    SHUTUPMAP[chan] = true;
+    console.log(Date.now(), "setting up censorship in ", chan);
+    setTimeout(function() {
+        console.log(Date.now(), "removing censorship in ", chan);
+        delete SHUTUPMAP[chan];
+    }, censorshipPeriod);
+}
+
 function censorship(from, chan, message, say, next) {
     if (message.indexOf(NICK) !== -1 &&
         (message.indexOf('shut up') !== -1 || message.indexOf('shutup') !== -1))
     {
-        var censorshipPeriod = CENSORSHIP_MAP[chan] || DEFAULT_CENSORSHIP_PERIOD;
-
-        SHUTUPMAP[chan] = true;
-        console.log(Date.now(), "setting up censorship in ", chan);
-        setTimeout(function() {
-            console.log(Date.now(), "removing censorship in ", chan);
-            delete SHUTUPMAP[chan];
-        }, censorshipPeriod);
-
+        set(chan);
         // Don't call next.
         return;
     }
 
-    if (typeof SHUTUPMAP[chan] === 'undefined')
+    if (typeof SHUTUPMAP[chan] === 'undefined') {
         next();
+    }
 }
