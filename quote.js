@@ -71,7 +71,8 @@ function quote(from, chan, message, say, next) {
 
         var q = QUOTES[who];
         for (var i = 0; i < q.length; i++) {
-            say(chan, who + ' - ' + (new Date(q[i].when)).toLocaleString() + ' - ' + q[i].what);
+            var when = (new Date(q[i].when)).toLocaleString().replace('GMT', 'UTC');
+            say(chan, who + ' - ' + when + ' - ' + q[i].what);
         }
         return next();
     }
