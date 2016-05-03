@@ -73,12 +73,13 @@ function run()
     });
 
     for (var i = 0; i < otherListeners.length; i++) {
-        var pair = otherListeners[i];
-        client.on(pair.key, function() {
-            var args = [].slice.call(arguments);
-            args = [say].concat(args);
-            pair.listener.apply(null, args);
-        });
+        (function(pair) {
+            client.on(pair.key, function() {
+                var args = [].slice.call(arguments);
+                args = [say].concat(args);
+                pair.listener.apply(null, args);
+            });
+        })(otherListeners[i]);
     }
 }
 
