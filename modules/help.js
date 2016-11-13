@@ -25,7 +25,7 @@ function help(say, from, chan, message) {
         return true;
 
     if (!privateMessage)
-        say(chan, from + ", see MPs.");
+        say(chan, from + ", see private messages.");
 
     if (topic) {
         if (typeof topics[topic] === 'undefined') {
@@ -34,12 +34,12 @@ function help(say, from, chan, message) {
             say(from, topics[topic]);
         }
     } else {
-        say(from, "This is an instance of meta-bot (https://github.com/bnjbvr/meta-bot), an generic IRC bot that can be extended thanks to modules so as to perform basic useful tasks.");
+        say(from, "This is an instance of meta-bot (https://github.com/bnjbvr/meta-bot), a generic IRC bot that can be extended with modules to perform basic tasks.");
         say(from, "The following modules are enabled (and have a description):");
         for (var name in descriptions) {
-            say(from, name + ': ' + descriptions[name]);
+            say(from, '- ' + name + ': ' + descriptions[name]);
         }
-        say(from, "You can ask for more help about a specific with !help MODULE_NAME.");
+        say(from, "You can ask for more help about a specific module with !help MODULE_NAME.");
     }
 
     return false;

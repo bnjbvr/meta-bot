@@ -10,7 +10,7 @@ var KNOWN_KEYWORDS = ['ember.js', 'emberjs', 'node.js', 'nodejs', 'crockford',
 
 var PRE_LOADED_TWEETS = 10;
 
-var DESCRIPTION = "It's all about entairtainment, isn't it?";
+var DESCRIPTION = "It's all about entertainment, isn't it?";
 var HELP = "Ping horsejs and they will deliver you a fresh, randomly selected tweet from the twitter account @horsejs. Also reacts on JS-related keywords."
 
 // Global values
