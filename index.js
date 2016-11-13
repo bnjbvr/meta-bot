@@ -1,48 +1,51 @@
 var irc = require('irc');
+var path = require('path');
 
+var utils = require('./utils');
 var config = require('./config');
 
-var karma = require('./karma')(config);
-var censorship = require('./censorship')(config);
-var quotes = require('./quote')(config);
-var memos = require('./memo')(config);
+var log = utils.makeLogger('main');
 
-var bodyguard = require('./bodyguard')(config, karma);
-var horse = require('./horse')(config, censorship);
+var ignorees = config.ignorees || [];
 
-var onMessageListeners = [];
-var otherListeners = [];
-
-addExtension(bodyguard);
-addExtension(karma);
-addExtension(memos);
-addExtension(censorship);
-addExtension(quotes);
-addExtension(horse);
-
-var ignorees = ['mrgiggles', config.nick];
-function ignore(from) {
-    return ignorees.indexOf(from) !== -1 ||
+function ignore(nick) {
+    return ignorees.indexOf(nick) !== -1 ||
            from.indexOf('bot') !== -1;
 }
 
-function addExtension(importedModule)
-{
-    if (typeof importedModule === 'function') {
-        onMessageListeners.push(importedModule);
-    } else {
-        onMessageListeners.push(importedModule.onMessage);
-        for (var i in importedModule) {
-            if (i === 'onMessage')
+function setupListener(client, say, key, descs) {
+    log('Setting up listener', key);
+
+    client.on(key, function() {
+        // Pass the 'say' function and the listener arguments.
+        var args = [].slice.call(arguments);
+        args = [say].concat(args);
+
+        log('Calling listeners for', key);
+
+        // Start with listeners.
+        out:
+            for (var i = 0; i < descs.length; i++) {
+            var desc = descs[i];
+            if (!desc.enabled)
                 continue;
 
-            console.log('adding listener for', i);
-            otherListeners.push({
-                key: i,
-                listener: importedModule[i]
-            });
+            for (var j = 0; j < desc.funcs.length; j++) {
+                var keepOn = false;
+
+                try {
+                    keepOn = desc.funcs[j].apply(null, args);
+                } catch(e) {
+                    log('Error when applying listener for', desc.name, ':\n', e.toString());
+                }
+
+                if (!keepOn) {
+                    log('Module', desc.name, 'is aborting, stopping.');
+                    break out;
+                }
+            }
         }
-    }
+    });
 }
 
 function run()
@@ -56,30 +59,53 @@ function run()
     });
 
     var say = client.say.bind(client);
-    function callNext(index, from, chan, message) {
-        if (index >= onMessageListeners.length)
-            return;
-        if (typeof onMessageListeners[index] !== 'function')
-            return;
-        if (ignore(from))
-            return;
-        onMessageListeners[index](from, chan, message, say, function() {
-            callNext(index + 1, from, chan, message);
-        });
+
+    var context = {
+        owner: config.owner,
+        nick: config.nick,
+        exports: {}
+    };
+
+    // Maps event => [{ name: String, enabled: Boolean, funcs: [Function]}]
+    var listeners = {};
+
+    for (var i = 0; i < config.modules.length; i++) {
+        var desc = config.modules[i];
+
+        var relativePath = path.join('modules', desc.name);
+
+        // Each module returns an object of the form:
+        // {
+        //  listeners: {
+        //      listenerName: [func1, func2],
+        //      otherListenerName: func
+        //  }
+        //  exports: { }
+        // }
+        var module = require('./' + relativePath)(context, desc.params);
+
+        module.listeners = module.listeners || {};
+
+        for (var key in module.listeners) {
+            var funcs = module.listeners[key];
+            if (!(funcs instanceof Array)) {
+                funcs = [funcs];
+            }
+
+            listeners[key] = listeners[key] || [];
+
+            listeners[key].push({
+                name: desc.name,
+                enabled: desc.enabled,
+                funcs: funcs
+            });
+
+            context.exports[desc.name] = module.exports;
+        }
     }
 
-    client.on('message', function(from, chan, message) {
-        callNext(0, from, chan, message);
-    });
-
-    for (var i = 0; i < otherListeners.length; i++) {
-        (function(pair) {
-            client.on(pair.key, function() {
-                var args = [].slice.call(arguments);
-                args = [say].concat(args);
-                pair.listener.apply(null, args);
-            });
-        })(otherListeners[i]);
+    for (var key in listeners) {
+        setupListener(client, say, key, listeners[key]);
     }
 }
 

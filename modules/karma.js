@@ -1,4 +1,4 @@
-var utils = require('./utils');
+var utils = require('../utils');
 
 var FILENAME;
 var KARMAS = {};
@@ -6,26 +6,21 @@ var KARMAS = {};
 var BLOCKED = {};
 var DEBOUNCING_RATE = 5000; // ms
 
+var log = utils.makeLogger('karma');
+
 function loadKarmas() {
     var content;
     try {
         content = utils.readFile(FILENAME) || '{}';
         KARMAS = JSON.parse(content);
     } catch(e) {
-        console.error("when loading karmas:", e.message, e.stack);
+        log("error when loading karmas:", e.message, e.stack);
     }
 }
 
 function writeKarmas() {
     utils.writeFileAsync(FILENAME, JSON.stringify(KARMAS));
 }
-
-module.exports = function(config) {
-    FILENAME = (config.karma && config.karma.filename) || 'karma.dat';
-    DEBOUNCING_RATE = (config.karma && config.karma.debouncing_rate) || DEBOUNCING_RATE;
-    loadKarmas();
-    return karmabot;
-};
 
 function findWho(msg, sep) {
     var who = msg.split(sep);
@@ -42,35 +37,40 @@ function getKarma(who) {
     return KARMAS[who];
 }
 
-function applyKarma(from, who, val) {
+function applyKarma(who, val) {
     var modifier = val === '++' ? +1 : -1;
     KARMAS[who] = getKarma(who) + modifier;
+    writeKarmas();
+}
+
+function applyKarmaAndBlock(from, who, val) {
+    applyKarma(who, val);
 
     var key = from + '-' + who;
     BLOCKED[key] = true;
     setTimeout(function() {
         delete BLOCKED[key];
     }, DEBOUNCING_RATE);
-
-    writeKarmas();
 }
 
 function isBlocked(from, who) {
     return typeof BLOCKED[from + '-' + who] !== 'undefined';
 }
 
-function karmabot(from, chan, message, say, next) {
+function karmabot(say, from, chan, message) {
     var who;
 
     if (message.indexOf('!karma') === 0) {
         who = message.split('!karma')[1];
         if (!who)
-            return next();
+            return true;
+
         who = who.trim().split(' ')[0];
         if (!who)
-            return next();
+            return true;
+
         say(chan, who + " has a karma of " + getKarma(who));
-        return next();
+        return false;
     }
 
     var actions = ['++', '--'];
@@ -85,22 +85,46 @@ function karmabot(from, chan, message, say, next) {
 
         if (typeof who === 'undefined') {
             say(chan, "I don't know who is " + who);
-            return next();
+            return false;
         }
 
         if (from === who) {
-            say(chan, "one can't apply karma to themselves");
-            return next();
+            say(chan, "one can't apply karma to themselves!");
+            return false;
         }
 
         if (isBlocked(from, who)) {
-            return next();
+            say(chan, "trying to apply karma too fast, aborting.");
+            return false;
         }
 
-        applyKarma(from, who, action);
-        return next();
+        applyKarmaAndBlock(from, who, action);
+        return true;
     }
 
-    return next();
+    return true;
 }
 
+module.exports = function(context, params) {
+    FILENAME = params.filename || 'karma.dat';
+    DEBOUNCING_RATE = params.debouncing_rate || DEBOUNCING_RATE;
+
+    loadKarmas();
+
+    log('Setting up module with filename=', FILENAME, ' and debouncing_rate=', DEBOUNCING_RATE);
+    log('Found karma for', Object.keys(KARMAS).length, 'people');
+
+    return {
+        listeners: {
+            message: karmabot
+        },
+        exports: {
+            plusplus(somebody) {
+                applyKarma(somebody, '++');
+            },
+            minusminus(somebody) {
+                applyKarma(somebody, '--');
+            },
+        }
+    }
+};

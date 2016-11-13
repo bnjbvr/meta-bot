@@ -1,41 +1,32 @@
-var utils = require('./utils');
+var utils = require('../utils');
 
 var MEMOS = {};
 var FILENAME = '';
 var BOT_NICK = '';
 
-module.exports = function(config) {
-    FILENAME = (config.memo && config.memo.filename) || 'memo.dat';
-    MEMOS = JSON.parse(utils.readFile(FILENAME) || '{}');
-    BOT_NICK = config.nick;
-    return {
-        onMessage: addMemo,
-        join: onJoin,
-        names: onNames
-    };
-}
+var log = utils.makeLogger('memo');
 
-function addMemo(from, chan, message, say, next) {
+function addMemo(say, from, chan, message) {
     if (message.indexOf("!memo") === 0) {
         var cmd = message.split('!memo');
         if (cmd.length < 2)
-            return next();
+            return true;
 
         cmd = cmd[1].trim();
         if (!cmd)
-            return next();
+            return true;
 
         cmd = cmd.split(' ');
         if (cmd.length < 2)
-            return next();
+            return true;
 
         var who = cmd.shift();
         if (who === BOT_NICK)
-            return next();
+            return true;
 
         var what = cmd.join(' ');
 
-        say(chan, from + ', memo added for ' + who + '.');
+        say(chan, from + ', memo added.');
 
         MEMOS[chan] = MEMOS[chan] || {};
         MEMOS[chan][who] = MEMOS[chan][who] || [];
@@ -47,10 +38,10 @@ function addMemo(from, chan, message, say, next) {
         });
 
         utils.writeFileAsync(FILENAME, JSON.stringify(MEMOS));
-        return;
+        return false;
     }
 
-    next();
+    return true;
 }
 
 function releaseMemos(say, chan, nick) {
@@ -75,15 +66,42 @@ function releaseMemos(say, chan, nick) {
 
 function onNames(say, chan, nicks) {
     if (typeof nicks !== 'object')
-        return;
+        return true;
 
     for (var nick in nicks) {
         releaseMemos(say, chan, nick);
     }
+
+    return true;
 }
 
 function onJoin(say, chan, nick, message) {
     if (nick === BOT_NICK)
-        return;
+        return true;
+
     releaseMemos(say, chan, nick);
+    return true;
+}
+
+module.exports = function(context, params) {
+    FILENAME = params.filename || 'memo.dat';
+    MEMOS = JSON.parse(utils.readFile(FILENAME) || '{}');
+
+    BOT_NICK = context.nick;
+
+    var numMemos = 0;
+    for (var chan in MEMOS) {
+        for (var memos in MEMOS[chan])
+            numMemos += MEMOS[chan][memos].length;
+    }
+
+    log('Setting up module:', numMemos, 'memos awaiting to be released.');
+
+    return {
+        listeners: {
+            message: addMemo,
+            join: onJoin,
+            names: onNames
+        }
+    };
 }

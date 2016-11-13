@@ -10,3 +10,11 @@ exports.writeFileAsync = function(filename, data) {
             console.error("when writing karmas: ", err.message, err.stack);
     });
 }
+
+exports.makeLogger = function(prefix) {
+    return function() {
+        var args = [].slice.call(arguments);
+        args = [prefix, '--'].concat(args);
+        console.log.apply(console, args);
+    }
+}
