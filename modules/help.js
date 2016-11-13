@@ -8,11 +8,14 @@ function help(say, from, chan, message) {
     var topic = null;
     var trigger = false;
 
+    var privateMessage = from === chan;
+
     if (message.indexOf('!help') === 0) {
         trigger = true;
         topic = message.split('!help')[1];
         topic = topic && topic.trim().split(' ')[0];
-    } else if (message.indexOf(NICK) !== -1 && message.indexOf('help') !== -1) {
+    } else if ((message.indexOf(NICK) !== -1 || privateMessage)
+               && message.indexOf('help') !== -1) {
         trigger = true;
         topic = message.split('help')[1];
         topic = topic && topic.trim().split(' ')[0];
@@ -21,7 +24,8 @@ function help(say, from, chan, message) {
     if (!trigger)
         return true;
 
-    say(chan, from + ", see MPs.");
+    if (!privateMessage)
+        say(chan, from + ", see MPs.");
 
     if (topic) {
         if (typeof topics[topic] === 'undefined') {
@@ -30,7 +34,7 @@ function help(say, from, chan, message) {
             say(from, topics[topic]);
         }
     } else {
-        say(from, "This is an instance of meta-bot, an generic IRC bot that can be extended thanks to modules so as to perform basic useful tasks.");
+        say(from, "This is an instance of meta-bot (https://github.com/bnjbvr/meta-bot), an generic IRC bot that can be extended thanks to modules so as to perform basic useful tasks.");
         say(from, "The following modules are enabled (and have a description):");
         for (var name in descriptions) {
             say(from, name + ': ' + descriptions[name]);

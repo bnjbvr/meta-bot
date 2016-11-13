@@ -13,13 +13,21 @@ function ignore(nick) {
            from.indexOf('bot') !== -1;
 }
 
-function setupListener(client, say, key, descs) {
+function setupListener(context, client, say, key, descs) {
     log('Setting up listener', key);
 
     client.on(key, function() {
         // Pass the 'say' function and the listener arguments.
         var args = [].slice.call(arguments);
         args = [say].concat(args);
+
+        // Special handlings
+        if (key === 'message') {
+            // Replace 'chan' by 'from' if it's a private message.
+            if (args[2] === context.nick) {
+                args[2] = args[1];
+            }
+        }
 
         log('Calling listeners for', key);
 
@@ -129,7 +137,7 @@ function run()
     }
 
     for (var key in listeners) {
-        setupListener(client, say, key, listeners[key]);
+        setupListener(context, client, say, key, listeners[key]);
     }
 }
 

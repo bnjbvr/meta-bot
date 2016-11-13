@@ -82,25 +82,30 @@ function repeatPromise(promiseFactory, repeats) {
 
 function horsejs(say, from, chan, message)
 {
-    if (message.indexOf(NICK) !== -1) {
+    for (var kw in keywordMap) {
+        if (message.toLowerCase().indexOf(kw) === -1) {
+            continue;
+        }
+
+        var tweets = keywordMap[kw];
+        var index = Math.random() * tweets.length | 0;
+
+        say(chan, tweets[index]);
+        setCensorship(chan);
+
+        tweets.splice(index, 1);
+        return false;
+    }
+
+    var privateMessage = from === chan;
+
+    if (privateMessage || message.indexOf(NICK) !== -1) {
         getTweet().then(function (tweet) {
             say(chan, tweet);
             setCensorship(chan);
         }).catch(function(err) {
             say(OWNER, 'Internal error:' + err)
         });
-        return false;
-    }
-
-    for (var kw in keywordMap) {
-        if (message.toLowerCase().indexOf(kw) === -1) {
-            continue;
-        }
-        var tweets = keywordMap[kw];
-        var index = Math.random() * tweets.length | 0;
-        say(chan, tweets[index]);
-        setCensorship(chan);
-        tweets.splice(index, 1);
         return false;
     }
 
