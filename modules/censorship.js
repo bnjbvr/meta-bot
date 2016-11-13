@@ -35,17 +35,19 @@ function censorship(say, from, chan, message) {
 module.exports = function(context, params) {
     nick = context.nick;
 
-    defaultCensorhipPeriod = params.defaultPeriod || 5 * MINUTES;
+    defaultCensorshipPeriod = params.defaultPeriod || 5 * MINUTES;
     censorshipMap = params.periodMap || {};
 
-    log('Setting up module with default censorship period(', defaultCensorhipPeriod, ')');
+    log('Setting up module with default censorship period(', defaultCensorshipPeriod, ')');
 
     return {
         listeners: {
             message: censorship
         },
         exports: {
-            set: set
+            set: set,
+            description: 'Makes the bot shut up.',
+            help: "Say 'shut up' or 'shutup' to the bot to force it to silence for " + defaultCensorshipPeriod + " seconds."
         }
     };
 }

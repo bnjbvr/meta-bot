@@ -98,6 +98,12 @@ module.exports = function(context, params) {
     return {
         listeners: {
             message: quote
+        },
+        exports: {
+            description: "Fortunes-like module: save quotes of people for later out-of-context lulz.",
+            help: "- To save SOMEBODY's quote, assuming this quote includes the text 'HELLO', just do !aq SOMEBODY HELLO\n" +
+                "This bot has been configured to memorize the last " + BACKLOG_MEMORY + " messages of each person only.\n" +
+                "- To get SOMEBODY's quotes, just say: !q SOMEBODY"
         }
     };
 }

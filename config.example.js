@@ -15,6 +15,11 @@ module.exports = {
 
     modules: [
         {
+            name: 'help',
+            enabled: true,
+            deferInit: true
+        },
+        {
             name: 'karma',
             enabled: true,
             params: {
@@ -60,6 +65,6 @@ module.exports = {
             params: {
                 preloadTweets: 1
             }
-        }
+        },
     ]
 }

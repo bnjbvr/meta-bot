@@ -26,7 +26,7 @@ module.exports = function(context, params) {
 
     if (typeof OWNER === 'undefined') {
         log('Bodyguard expects a param called "owner", aborting setup.');
-        return {};
+        return { };
     }
 
     plusplus = context.exports.karma.plusplus;
@@ -37,6 +37,9 @@ module.exports = function(context, params) {
     return {
         listeners: {
             message: bodyguard
+        },
+        exports: {
+            description: 'Will protect its owner in case of karma lowering.'
         }
     };
 }

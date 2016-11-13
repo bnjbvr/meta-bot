@@ -125,6 +125,9 @@ module.exports = function(context, params) {
             minusminus(somebody) {
                 applyKarma(somebody, '--');
             },
+            description: "Counts karma (i.e. instances of pseudo++ and pseudo--).",
+            help: "- Whenever you add ++ or -- to a given name, it will affect this user's karma as saved in the database.\n" +
+                "- To know the karma of somebody, just say: !karma nickname"
         }
     }
 };

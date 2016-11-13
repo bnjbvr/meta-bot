@@ -25,11 +25,8 @@ function setupListener(client, say, key, descs) {
 
         // Start with listeners.
         out:
-            for (var i = 0; i < descs.length; i++) {
+        for (var i = 0; i < descs.length; i++) {
             var desc = descs[i];
-            if (!desc.enabled)
-                continue;
-
             for (var j = 0; j < desc.funcs.length; j++) {
                 var keepOn = false;
 
@@ -46,6 +43,49 @@ function setupListener(client, say, key, descs) {
             }
         }
     });
+}
+
+function importModule(context, listeners, desc) {
+    if (!desc.enabled)
+        return;
+
+    var relativePath = path.join('modules', desc.name);
+
+    // Each module returns an object of the form:
+    // {
+    //  listeners: {
+    //      listenerName: [func1, func2],
+    //      otherListenerName: func
+    //  }
+    //  exports: { }
+    // }
+    var module = require('./' + relativePath)(context, desc.params);
+
+    module.listeners = module.listeners || {};
+
+    for (var key in module.listeners) {
+        var funcs = module.listeners[key];
+        if (!(funcs instanceof Array)) {
+            funcs = [funcs];
+        }
+
+        listeners[key] = listeners[key] || [];
+
+        var entry = {
+            name: desc.name,
+            funcs: funcs
+        };
+
+        if (desc.deferInit) {
+            // TODO works only correctly when there's one deferred module, meh,
+            // who needs more?
+            listeners[key].unshift(entry);
+        } else {
+            listeners[key].push(entry);
+        }
+
+        context.exports[desc.name] = module.exports;
+    }
 }
 
 function run()
@@ -66,42 +106,26 @@ function run()
         exports: {}
     };
 
+    // Determine order of module imports.
+    var startModules = [];
+    var endModules = [];
+    for (var i = 0; i < config.modules.length; i++) {
+        var desc = config.modules[i];
+        if (desc.deferInit)
+            endModules.push(desc);
+        else
+            startModules.push(desc);
+    }
+
     // Maps event => [{ name: String, enabled: Boolean, funcs: [Function]}]
     var listeners = {};
 
-    for (var i = 0; i < config.modules.length; i++) {
-        var desc = config.modules[i];
-
-        var relativePath = path.join('modules', desc.name);
-
-        // Each module returns an object of the form:
-        // {
-        //  listeners: {
-        //      listenerName: [func1, func2],
-        //      otherListenerName: func
-        //  }
-        //  exports: { }
-        // }
-        var module = require('./' + relativePath)(context, desc.params);
-
-        module.listeners = module.listeners || {};
-
-        for (var key in module.listeners) {
-            var funcs = module.listeners[key];
-            if (!(funcs instanceof Array)) {
-                funcs = [funcs];
-            }
-
-            listeners[key] = listeners[key] || [];
-
-            listeners[key].push({
-                name: desc.name,
-                enabled: desc.enabled,
-                funcs: funcs
-            });
-
-            context.exports[desc.name] = module.exports;
-        }
+    // Trigger module imports.
+    for (var i = 0; i < startModules.length; i++) {
+        importModule(context, listeners, startModules[i]);
+    }
+    for (var i = 0; i < endModules.length; i++) {
+        importModule(context, listeners, endModules[i]);
     }
 
     for (var key in listeners) {
