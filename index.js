@@ -55,7 +55,7 @@ function setupListener(context, client, say, key, descs) {
             }
         }
 
-        if (key == 'message' && !foundMatchingListener && args[3].indexOf(context.nick) === 0) {
+        if (context.enablePTP && key == 'message' && !foundMatchingListener && args[3].indexOf(context.nick) === 0) {
             say(args[2], args[1] + ": PTP");
         }
     });
@@ -119,6 +119,7 @@ function run()
     var context = {
         owner: config.owner,
         nick: config.nick,
+        enablePTP: config.enablePTP,
         exports: {}
     };
 
