@@ -25,7 +25,7 @@ function set(chan) {
 }
 
 function censorship(say, from, chan, message) {
-    if (message.indexOf('shut up') !== -1 || message.indexOf('shutup') !== -1) {
+    if (message.indexOf(nick) === 0 && (message.indexOf('shut up') !== -1 || message.indexOf('shutup') !== -1)) {
         set(chan);
         return false;
     }
