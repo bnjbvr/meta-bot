@@ -32,8 +32,12 @@ function setupListener(context, client, say, key, descs) {
         log('Calling listeners for', key);
 
         // Start with listeners.
-        out:
+        var foundMatchingListener = false;
         for (var i = 0; i < descs.length; i++) {
+            if (foundMatchingListener) {
+                break;
+            }
+
             var desc = descs[i];
             for (var j = 0; j < desc.funcs.length; j++) {
                 var keepOn = false;
@@ -46,9 +50,13 @@ function setupListener(context, client, say, key, descs) {
 
                 if (!keepOn) {
                     log('Module', desc.name, 'is aborting, stopping.');
-                    break out;
+                    foundMatchingListener = true;
                 }
             }
+        }
+
+        if (context.enablePTP && key == 'message' && !foundMatchingListener && args[3].indexOf(context.nick) === 0) {
+            say(args[2], args[1] + ": PTP");
         }
     });
 }
@@ -111,6 +119,7 @@ function run()
     var context = {
         owner: config.owner,
         nick: config.nick,
+        enablePTP: config.enablePTP,
         exports: {}
     };
 

@@ -99,7 +99,7 @@ function horsejs(say, from, chan, message)
 
     var privateMessage = from === chan;
 
-    if (privateMessage || message.indexOf(NICK) !== -1) {
+    if (privateMessage || message.indexOf(NICK) > 0) {
         getTweet().then(function (tweet) {
             say(chan, tweet);
             setCensorship(chan);

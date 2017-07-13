@@ -13,6 +13,8 @@ module.exports = {
     userName: 'chevaljs',
     realName: 'chevaljs',
 
+    enablePTP: true,
+
     modules: [
         {
             name: 'help',
