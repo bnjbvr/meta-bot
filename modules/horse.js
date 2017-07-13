@@ -2,11 +2,13 @@ var utils = require('../utils');
 var request = require('request');
 
 // Constant
-var KNOWN_FRAMEWORKS = ['react', 'angular', 'jquery', 'backbone', 'meteor'];
+var KNOWN_FRAMEWORKS = ['react', 'angular', 'jquery', 'backbone', 'meteor', 'vue',
+                        'mocha', 'jest'];
 
 var KNOWN_KEYWORDS = ['ember.js', 'emberjs', 'node.js', 'nodejs', 'crockford',
                       'eich', 'rhino', 'spidermonkey', 'v8', 'spartan',
-                      'chakra', 'webkit', 'blink', 'jsc', 'turbofan'];
+                      'chakra', 'webkit', 'blink', 'jsc', 'turbofan', 'tc39',
+                      'wasm', 'webassembly', 'webasm', 'ecma262', 'ecmascript'];
 
 var PRE_LOADED_TWEETS = 10;
 
