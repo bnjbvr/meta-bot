@@ -5,14 +5,14 @@ const MINUTES = SECONDS * 60;
 const HOURS = MINUTES * 60;
 
 var nick = '';
-var defaultCensorhipPeriod = 5 * MINUTES;
+var defaultCensorshipPeriod = 5 * MINUTES;
 var censorshipMap = {};
 var silenceMap = {};
 
 var log = utils.makeLogger('censorship');
 
 function set(chan) {
-    var censorshipPeriod = censorshipMap[chan] || defaultCensorhipPeriod;
+    var censorshipPeriod = censorshipMap[chan] || defaultCensorshipPeriod;
 
     silenceMap[chan] = true;
 
@@ -35,7 +35,7 @@ function censorship(say, from, chan, message) {
 module.exports = function(context, params) {
     nick = context.nick;
 
-    defaultCensorshipPeriod = params.defaultPeriod || 5 * MINUTES;
+    defaultCensorshipPeriod = typeof params.defaultPeriod !== 'undefined' ? params.defaultPeriod : 5 * MINUTES;
     censorshipMap = params.periodMap || {};
 
     log('Setting up module with default censorship period(', defaultCensorshipPeriod, ')');
