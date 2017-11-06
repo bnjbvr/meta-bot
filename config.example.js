@@ -19,6 +19,14 @@ module.exports = {
             enabled: true, // if enabled, will react on !help messages.
         },
         {
+            name: 'ignore',
+            enabled: true,
+            params: {
+                ignorees: ['bnjbvr|ignored'],  // a list of nicks to ignore.
+                bots: true                     // if true, will ignore people with "bot" in their name.
+            }
+        },
+        {
             name: 'karma',
             enabled: true,
             params: {
