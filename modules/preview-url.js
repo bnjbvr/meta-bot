@@ -76,7 +76,7 @@ module.exports = function(context, params) {
 
     var numURLs = 0;
     for (let chan in oldMap) {
-        numURLs += Object.keys(oldMap[chan]);
+        numURLs += Object.keys(oldMap[chan]).length;
     }
     log('Setting up module preview-url:', numURLs, 'known URLs.');
 
