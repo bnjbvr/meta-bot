@@ -19,6 +19,10 @@ module.exports = {
             enabled: true, // if enabled, will react on !help messages.
         },
         {
+            name: 'preview-url',
+            enabled: true // if enabled, will fetch the title of URLs written by people in the channel.
+        },
+        {
             name: 'ignore',
             enabled: true,
             params: {
