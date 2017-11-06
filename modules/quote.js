@@ -51,7 +51,7 @@ function onMessage(say, from, chan, message) {
 
         if (typeof QUOTES[who] === 'undefined') {
             say(chan, "no quotes for " + who);
-            return CARRY_ON;
+            return ABORT;
         }
 
         var maybeWhat = tryQ[3];
