@@ -4,3 +4,4 @@ config.js
 *.txt
 *.dat
 *.lock
+package-lock.json
