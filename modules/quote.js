@@ -10,31 +10,24 @@ var FILENAME = '';
 var BACKLOG = {};
 var BACKLOG_MEMORY
 
+var ADD_QUOTE_REGEXP = /^!aq (\S*) (\S*)\s*$/;
+var REMOVE_QUOTE_REGEXP = /^!rq (\S*)\s*$/;
+var QUOTE_REGEXP = /^!q (\S*)( (\S*))?\s*$/;
+
 function onMessage(say, from, chan, message) {
-    if (message.indexOf("!aq") === 0) {
-        var cmd = message.split('!aq');
-        if (cmd.length < 2)
-            return CARRY_ON;
-
-        cmd = cmd[1].trim();
-        if (!cmd)
-            return CARRY_ON;
-
-        cmd = cmd.split(' ');
-        if (cmd.length < 2)
-            return CARRY_ON;
-
-        var who = cmd.shift();
+    var tryAQ = ADD_QUOTE_REGEXP.exec(message);
+    if (tryAQ !== null) {
+        var who = tryAQ[1];
+        var keyword = tryAQ[2];
 
         var backlog = BACKLOG[who] || [];
+
         var what = null;
         for (var i = 0; i < backlog.length; i++) {
             var line = backlog[i];
-            for (var j = 0; j < cmd.length; j++) {
-                if (line.indexOf(cmd[j]) !== -1) {
-                    what = line;
-                    break;
-                }
+            if (line.indexOf(keyword) >= 0) {
+                what = line;
+                break;
             }
         }
 
@@ -52,27 +45,45 @@ function onMessage(say, from, chan, message) {
         return ABORT;
     }
 
-    if (message.indexOf("!q") === 0) {
-        var who = message.split('!q');
-        if (who.length < 2)
-            return CARRY_ON;
+    var tryQ = QUOTE_REGEXP.exec(message);
+    if (tryQ !== null) {
+        var who = tryQ[1];
 
-        who = who[1].trim().split(' ')[0];
-        if (!who)
-            return CARRY_ON;
-
-        who = who.trim();
         if (typeof QUOTES[who] === 'undefined') {
             say(chan, "no quotes for " + who);
             return CARRY_ON;
         }
 
+        var maybeWhat = tryQ[3];
         var q = QUOTES[who];
         for (var i = 0; i < q.length; i++) {
-            var when = (new Date(q[i].when)).toLocaleString().replace('GMT', 'UTC');
-            say(chan, who + ' - ' + when + ' - ' + q[i].what);
+            if (typeof maybeWhat === 'undefined' || q[i].what.indexOf(maybeWhat) >= 0) {
+                var when = (new Date(q[i].when)).toLocaleString().replace('GMT', 'UTC');
+                say(chan, who + ' - ' + when + ' - ' + q[i].what);
+            }
         }
+
         return ABORT;
+    }
+
+    var tryRQ = REMOVE_QUOTE_REGEXP.exec(message);
+    if (tryRQ !== null) {
+        var what = tryRQ[1];
+        if (typeof QUOTES[from] === 'undefined') {
+            return CARRY_ON;
+        }
+        var q = QUOTES[from];
+        for (var i = 0; i < q.length; i++) {
+            if (q[i].what.indexOf(what) >= 0) {
+                say(chan, from + ', removed your quote containing `' + what + '`.');
+
+                q.splice(i, 1);
+                utils.writeFileAsync(FILENAME, QUOTES);
+
+                return ABORT;
+            }
+        }
+        say(chan, from + ", didn't found your quote.");
     }
 
     BACKLOG[from] = BACKLOG[from] || [];
@@ -106,7 +117,8 @@ module.exports = function(context, params) {
             description: "Fortunes-like module: save quotes of people for later out-of-context lulz.",
             help: "- To save SOMEBODY's quote, assuming this quote includes the text 'HELLO', just do !aq SOMEBODY HELLO\n" +
                 "This bot has been configured to memorize the last " + BACKLOG_MEMORY + " messages of each person only.\n" +
-                "- To get SOMEBODY's quotes, just say: !q SOMEBODY"
+                "- To get SOMEBODY's quotes, just say: !q SOMEBODY [EXCERPT]?\n" +
+                "- To get one of your quotes removed, just say: !rq EXCERPT"
         }
     };
 }
