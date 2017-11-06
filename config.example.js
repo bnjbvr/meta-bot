@@ -13,13 +13,10 @@ module.exports = {
     userName: 'chevaljs',
     realName: 'chevaljs',
 
-    enablePTP: true,
-
     modules: [
         {
             name: 'help',
-            enabled: true,
-            deferInit: true
+            enabled: true, // if enabled, will react on !help messages.
         },
         {
             name: 'karma',
@@ -65,7 +62,8 @@ module.exports = {
             name: 'horse',
             enabled: true,
             params: {
-                preloadTweets: 1
+                preloadTweets: 1,   // Number of tweets to pre-load at start.
+                censorship: true    // Will self-censor after horsejs-ing if set to true.
             }
         },
     ]

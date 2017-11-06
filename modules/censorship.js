@@ -7,29 +7,30 @@ const HOURS = MINUTES * 60;
 var nick = '';
 var defaultCensorshipPeriod = 5 * MINUTES;
 var censorshipMap = {};
-var silenceMap = {};
+var abortMap = {};
 
 var log = utils.makeLogger('censorship');
 
 function set(chan) {
+    abortMap[chan] = utils.ABORT;
+
     var censorshipPeriod = censorshipMap[chan] || defaultCensorshipPeriod;
-
-    silenceMap[chan] = true;
-
     log(Date.now(), "setting up censorship in ", chan, "for", censorshipPeriod/1000, "seconds");
 
     setTimeout(function() {
         log(Date.now(), "removing censorship in ", chan);
-        silenceMap[chan] = false;
+        abortMap[chan] = utils.CARRY_ON;
     }, censorshipPeriod);
 }
 
-function censorship(say, from, chan, message) {
-    if (message.indexOf(nick) === 0 && (message.indexOf('shut up') !== -1 || message.indexOf('shutup') !== -1)) {
+function onMessage(say, from, chan, message) {
+    if (message.indexOf(nick) === 0 &&
+        (message.indexOf('shut up') !== -1 || message.indexOf('shutup') !== -1))
+    {
         set(chan);
-        return false;
+        return utils.ABORT;
     }
-    return !silenceMap[chan];
+    return abortMap[chan];
 }
 
 module.exports = function(context, params) {
@@ -42,7 +43,7 @@ module.exports = function(context, params) {
 
     return {
         listeners: {
-            message: censorship
+            message: onMessage
         },
         exports: {
             set: set,

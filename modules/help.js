@@ -3,6 +3,8 @@ var utils = require('../utils');
 var log = utils.makeLogger('help');
 
 var NICK = null;
+var descriptions = {};
+var topics = {};
 
 function help(say, from, chan, message) {
     var topic = null;
@@ -45,32 +47,36 @@ function help(say, from, chan, message) {
     return false;
 }
 
-var descriptions = {};
-var topics = {};
-
 module.exports = function(context, params) {
     NICK = context.nick;
 
-    var numDescriptions = 0, numTopics = 0;
-    for (var name in context.exports) {
-        var module = context.exports[name] || {};
+    log('Help module alive, waiting for help registrations.');
 
-        if (typeof module.help !== 'undefined') {
-            topics[name] = module.help;
-            numTopics++;
+    function registerHelp(context) {
+        log('Registering help...');
+
+        var numDescriptions = 0, numTopics = 0;
+        for (var name in context.exports) {
+            var module = context.exports[name] || {};
+
+            if (typeof module.help !== 'undefined') {
+                topics[name] = module.help;
+                numTopics++;
+            }
+
+            if (typeof module.description !== 'undefined') {
+                descriptions[name] = module.description;
+                numDescriptions++;
+            }
         }
 
-        if (typeof module.description !== 'undefined') {
-            descriptions[name] = module.description;
-            numDescriptions++;
-        }
+        log('Module set up:', numDescriptions, 'descriptions and', numTopics, 'topics found.');
     }
-
-    log('Setting up module:', numDescriptions, 'descriptions and', numTopics, 'topics found.');
 
     return {
         listeners: {
             message: help
-        }
+        },
+        afterRegister: registerHelp
     }
 }

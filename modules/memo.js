@@ -1,47 +1,50 @@
 var utils = require('../utils');
 
+var CARRY_ON = utils.CARRY_ON;
+var ABORT = utils.ABORT;
+
 var MEMOS = {};
 var FILENAME = '';
 var BOT_NICK = '';
 
 var log = utils.makeLogger('memo');
 
-function addMemo(say, from, chan, message) {
-    if (message.indexOf("!memo") === 0) {
-        var cmd = message.split('!memo');
-        if (cmd.length < 2)
-            return true;
-
-        cmd = cmd[1].trim();
-        if (!cmd)
-            return true;
-
-        cmd = cmd.split(' ');
-        if (cmd.length < 2)
-            return true;
-
-        var who = cmd.shift();
-        if (who === BOT_NICK)
-            return true;
-
-        var what = cmd.join(' ');
-
-        say(chan, from + ', memo added.');
-
-        MEMOS[chan] = MEMOS[chan] || {};
-        MEMOS[chan][who] = MEMOS[chan][who] || [];
-
-        MEMOS[chan][who].push({
-            from: from,
-            what: what,
-            when: Date.now()
-        });
-
-        utils.writeFileAsync(FILENAME, JSON.stringify(MEMOS));
-        return false;
+function onMessage(say, from, chan, message) {
+    if (message.indexOf("!memo") !== 0) {
+        return CARRY_ON;
     }
 
-    return true;
+    var cmd = message.split('!memo');
+    if (cmd.length < 2)
+        return CARRY_ON;
+
+    cmd = cmd[1].trim();
+    if (!cmd)
+        return CARRY_ON;
+
+    cmd = cmd.split(' ');
+    if (cmd.length < 2)
+        return CARRY_ON;
+
+    var who = cmd.shift();
+    if (who === BOT_NICK)
+        return CARRY_ON;
+
+    var what = cmd.join(' ');
+
+    say(chan, from + ', memo added.');
+
+    MEMOS[chan] = MEMOS[chan] || {};
+    MEMOS[chan][who] = MEMOS[chan][who] || [];
+
+    MEMOS[chan][who].push({
+        from: from,
+        what: what,
+        when: Date.now()
+    });
+
+    utils.writeFileAsync(FILENAME, MEMOS);
+    return ABORT;
 }
 
 function releaseMemos(say, chan, nick) {
@@ -61,26 +64,24 @@ function releaseMemos(say, chan, nick) {
         say(chan, nick + ', ' + memo.from + ' left this for you: "' + memo.what + '" (' + when + ')');
     }
 
-    utils.writeFileAsync(FILENAME, JSON.stringify(MEMOS));
+    delete MEMOS[chan][nick];
+
+    utils.writeFileAsync(FILENAME, MEMOS);
 }
 
 function onNames(say, chan, nicks) {
-    if (typeof nicks !== 'object')
-        return true;
-
+    if (typeof nicks !== 'object') {
+        return;
+    }
     for (var nick in nicks) {
         releaseMemos(say, chan, nick);
     }
-
-    return true;
 }
 
 function onJoin(say, chan, nick, message) {
     if (nick === BOT_NICK)
-        return true;
-
+        return;
     releaseMemos(say, chan, nick);
-    return true;
 }
 
 module.exports = function(context, params) {
@@ -99,7 +100,7 @@ module.exports = function(context, params) {
 
     return {
         listeners: {
-            message: addMemo,
+            message: onMessage,
             join: onJoin,
             names: onNames
         },

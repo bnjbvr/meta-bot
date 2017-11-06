@@ -6,68 +6,13 @@ var config = require('./config');
 
 var log = utils.makeLogger('main');
 
-var ignorees = config.ignorees || [];
-
-function ignore(nick) {
-    return ignorees.indexOf(nick) !== -1 ||
-           from.indexOf('bot') !== -1;
-}
-
-function setupListener(context, client, say, key, descs) {
-    log('Setting up listener', key);
-
-    client.on(key, function() {
-        // Pass the 'say' function and the listener arguments.
-        var args = [].slice.call(arguments);
-        args = [say].concat(args);
-
-        // Special handlings
-        if (key === 'message') {
-            // Replace 'chan' by 'from' if it's a private message.
-            if (args[2] === context.nick) {
-                args[2] = args[1];
-            }
-        }
-
-        log('Calling listeners for', key);
-
-        // Start with listeners.
-        var foundMatchingListener = false;
-        for (var i = 0; i < descs.length; i++) {
-            if (foundMatchingListener) {
-                break;
-            }
-
-            var desc = descs[i];
-            for (var j = 0; j < desc.funcs.length; j++) {
-                var keepOn = false;
-
-                try {
-                    keepOn = desc.funcs[j].apply(null, args);
-                } catch(e) {
-                    log('Error when applying listener for', desc.name, ':\n', e.toString());
-                }
-
-                if (!keepOn) {
-                    log('Module', desc.name, 'is aborting, stopping.');
-                    foundMatchingListener = true;
-                }
-            }
-        }
-
-        if (context.enablePTP && key == 'message' && !foundMatchingListener && args[3].indexOf(context.nick) === 0) {
-            say(args[2], args[1] + ": PTP");
-        }
-    });
-}
-
-function importModule(context, listeners, desc) {
+function registerModule(context, listeners, desc) {
     if (!desc.enabled)
         return;
 
     var relativePath = path.join('modules', desc.name);
 
-    // Each module returns an object of the form:
+    // Each module returns an object with the shape:
     // {
     //  listeners: {
     //      listenerName: [func1, func2],
@@ -85,28 +30,72 @@ function importModule(context, listeners, desc) {
             funcs = [funcs];
         }
 
+        // If this is the first module listening a key, create the listeners
+        // array.
         listeners[key] = listeners[key] || [];
 
-        var entry = {
+        // Pushes an entry describing the module functions to call.
+        listeners[key].push({
             name: desc.name,
             funcs: funcs
-        };
-
-        if (desc.deferInit) {
-            // TODO works only correctly when there's one deferred module, meh,
-            // who needs more?
-            listeners[key].unshift(entry);
-        } else {
-            listeners[key].push(entry);
-        }
+        });
 
         context.exports[desc.name] = module.exports;
     }
+
+    if (typeof module.afterRegister === 'function') {
+        context.afterRegister.push(module.afterRegister);
+    }
 }
 
-function run()
+function triggerAfterRegister(context) {
+    for (let func of context.afterRegister) {
+        func(context);
+    }
+    delete context.afterRegister;
+}
+
+function setupListener(context, client, key, descs) {
+    let say = client.say.bind(client);
+
+    log('Setting up listener', key);
+
+    client.on(key, function() {
+        // Pass the 'say' function and the listener arguments.
+        var args = [say].concat([].slice.call(arguments));
+
+        // Special treatments.
+        if (key === 'message') {
+            // Replace 'chan' by 'from' if it's a private message.
+            if (args[2] === context.nick) {
+                args[2] = args[1];
+            }
+        }
+
+        log('Calling listeners for', key);
+
+        // Start with listeners.
+        out:
+        for (let desc of descs) {
+            for (let func of desc.funcs) {
+                var carryOn;
+                try {
+                    carryOn = func.apply(null, args);
+                } catch(e) {
+                    log('Error when applying listener for', desc.name, ':\n', e.toString());
+                }
+                if (typeof carryOn !== 'undefined' && !carryOn) {
+                    log('Module', desc.name, 'is aborting, stopping.');
+                    break out;
+                }
+            }
+        }
+    });
+}
+
+function run(config)
 {
-    var client = new irc.Client(config.server, config.nick, {
+    let client = new irc.Client(config.server, config.nick, {
         debug: true,
         channels: config.channels,
         userName: config.userName,
@@ -114,39 +103,23 @@ function run()
         retryDelay: 120000
     });
 
-    var say = client.say.bind(client);
-
-    var context = {
+    let context = {
         owner: config.owner,
         nick: config.nick,
-        enablePTP: config.enablePTP,
-        exports: {}
+        exports: {},
+        afterRegister: []
     };
 
-    // Determine order of module imports.
-    var startModules = [];
-    var endModules = [];
-    for (var i = 0; i < config.modules.length; i++) {
-        var desc = config.modules[i];
-        if (desc.deferInit)
-            endModules.push(desc);
-        else
-            startModules.push(desc);
-    }
+    // Maps event => [{ name: String, funcs: [Function]}]
+    let listeners = {};
 
-    // Maps event => [{ name: String, enabled: Boolean, funcs: [Function]}]
-    var listeners = {};
-
-    // Trigger module imports.
-    for (var i = 0; i < startModules.length; i++) {
-        importModule(context, listeners, startModules[i]);
+    for (let moduleDesc of config.modules) {
+        registerModule(context, listeners, moduleDesc);
     }
-    for (var i = 0; i < endModules.length; i++) {
-        importModule(context, listeners, endModules[i]);
-    }
+    triggerAfterRegister(context);
 
-    for (var key in listeners) {
-        setupListener(context, client, say, key, listeners[key]);
+    for (let key in listeners) {
+        setupListener(context, client, key, listeners[key]);
     }
 }
 

@@ -1,5 +1,8 @@
 var utils = require('../utils');
 
+var CARRY_ON = utils.CARRY_ON;
+var ABORT = utils.ABORT;
+
 var FILENAME;
 var KARMAS = {};
 
@@ -19,7 +22,7 @@ function loadKarmas() {
 }
 
 function writeKarmas() {
-    utils.writeFileAsync(FILENAME, JSON.stringify(KARMAS));
+    utils.writeFileAsync(FILENAME, KARMAS);
 }
 
 function findWho(msg, sep) {
@@ -57,52 +60,38 @@ function isBlocked(from, who) {
     return typeof BLOCKED[from + '-' + who] !== 'undefined';
 }
 
-function karmabot(say, from, chan, message) {
+function onMessage(say, from, chan, message) {
     var who;
 
     if (message.indexOf('!karma') === 0) {
         who = message.split('!karma')[1];
         if (!who)
-            return true;
+            return CARRY_ON;
 
         who = who.trim().split(' ')[0];
         if (!who)
-            return true;
+            return CARRY_ON;
 
         say(chan, who + " has a karma of " + getKarma(who));
-        return false;
+        return ABORT;
     }
 
     var actions = ['++', '--'];
-    for (var i = 0; i < actions.length; i++) {
-
-        var action = actions[i];
+    for (let action of actions) {
         if (message.indexOf(action) === -1) {
             continue;
         }
 
         who = findWho(message, action);
-
-        if (typeof who === 'undefined') {
-            say(chan, "I don't know who is " + who);
-            return false;
-        }
-
-        if (from === who) {
-            say(chan, "one can't apply karma to themselves!");
-            return false;
-        }
-
-        if (isBlocked(from, who)) {
-            say(chan, "trying to apply karma too fast, aborting.");
-            return false;
+        if (typeof who === 'undefined' || from === who || isBlocked(from, who)) {
+            return CARRY_ON;
         }
 
         applyKarmaAndBlock(from, who, action);
-        return true;
+        return ABORT;
     }
 
-    return true;
+    return CARRY_ON;
 }
 
 module.exports = function(context, params) {
@@ -111,12 +100,12 @@ module.exports = function(context, params) {
 
     loadKarmas();
 
-    log('Setting up module with filename=', FILENAME, ' and debouncing_rate=', DEBOUNCING_RATE);
+    log('Setting up module with filename=', FILENAME, 'and debouncing_rate=', DEBOUNCING_RATE);
     log('Found karma for', Object.keys(KARMAS).length, 'people');
 
     return {
         listeners: {
-            message: karmabot
+            message: onMessage
         },
         exports: {
             plusplus(somebody) {

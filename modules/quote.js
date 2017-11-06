@@ -1,5 +1,8 @@
 var utils = require('../utils');
 
+var CARRY_ON = utils.CARRY_ON;
+var ABORT = utils.ABORT;
+
 var log = utils.makeLogger('quote');
 
 var QUOTES = {};
@@ -7,19 +10,19 @@ var FILENAME = '';
 var BACKLOG = {};
 var BACKLOG_MEMORY
 
-function quote(say, from, chan, message) {
+function onMessage(say, from, chan, message) {
     if (message.indexOf("!aq") === 0) {
         var cmd = message.split('!aq');
         if (cmd.length < 2)
-            return true;
+            return CARRY_ON;
 
         cmd = cmd[1].trim();
         if (!cmd)
-            return true;
+            return CARRY_ON;
 
         cmd = cmd.split(' ');
         if (cmd.length < 2)
-            return true;
+            return CARRY_ON;
 
         var who = cmd.shift();
 
@@ -36,7 +39,7 @@ function quote(say, from, chan, message) {
         }
 
         if (what === null)
-            return true;
+            return CARRY_ON;
 
         say(chan, from + ', quote added for ' + who + '.');
         QUOTES[who] = QUOTES[who] || [];
@@ -45,23 +48,23 @@ function quote(say, from, chan, message) {
             when: Date.now()
         });
 
-        utils.writeFileAsync(FILENAME, JSON.stringify(QUOTES));
-        return true;
+        utils.writeFileAsync(FILENAME, QUOTES);
+        return ABORT;
     }
 
     if (message.indexOf("!q") === 0) {
         var who = message.split('!q');
         if (who.length < 2)
-            return true;
+            return CARRY_ON;
 
         who = who[1].trim().split(' ')[0];
         if (!who)
-            return true;
+            return CARRY_ON;
 
         who = who.trim();
         if (typeof QUOTES[who] === 'undefined') {
             say(chan, "no quotes for " + who);
-            return true;
+            return CARRY_ON;
         }
 
         var q = QUOTES[who];
@@ -69,7 +72,7 @@ function quote(say, from, chan, message) {
             var when = (new Date(q[i].when)).toLocaleString().replace('GMT', 'UTC');
             say(chan, who + ' - ' + when + ' - ' + q[i].what);
         }
-        return true;
+        return ABORT;
     }
 
     BACKLOG[from] = BACKLOG[from] || [];
@@ -78,7 +81,7 @@ function quote(say, from, chan, message) {
     }
     BACKLOG[from].push(message);
 
-    return true;
+    return CARRY_ON;
 }
 
 module.exports = function(context, params) {
@@ -97,7 +100,7 @@ module.exports = function(context, params) {
 
     return {
         listeners: {
-            message: quote
+            message: onMessage
         },
         exports: {
             description: "Fortunes-like module: save quotes of people for later out-of-context lulz.",

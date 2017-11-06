@@ -8,7 +8,7 @@ var minusminus = null;
 
 var log = utils.makeLogger('bodyguard');
 
-function bodyguard(say, from, chan, message) {
+function onMessage(say, from, chan, message) {
     if (message.indexOf(OWNER + '--') !== -1) {
         log('Protection activated!');
 
@@ -18,7 +18,6 @@ function bodyguard(say, from, chan, message) {
         say(chan, from + '--');
         minusminus(from);
     }
-    return true;
 }
 
 module.exports = function(context, params) {
@@ -36,11 +35,10 @@ module.exports = function(context, params) {
 
     return {
         listeners: {
-            message: bodyguard
+            message: onMessage
         },
         exports: {
             description: 'Will protect its owner in case of karma lowering.'
         }
     };
 }
-

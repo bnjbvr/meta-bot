@@ -21,7 +21,7 @@ var TWEETS = [];
 var OWNER = '';
 var NICK = '';
 
-var setCensorship = null;
+var maybeSetCensorship = null;
 var keywordMap = {};
 
 var log = utils.makeLogger('horse');
@@ -82,7 +82,7 @@ function repeatPromise(promiseFactory, repeats) {
     });
 }
 
-function horsejs(say, from, chan, message)
+function onMessage(say, from, chan, message)
 {
     for (var kw in keywordMap) {
         if (message.toLowerCase().indexOf(kw) === -1) {
@@ -93,29 +93,30 @@ function horsejs(say, from, chan, message)
         var index = Math.random() * tweets.length | 0;
 
         say(chan, tweets[index]);
-        setCensorship(chan);
+        if (maybeSetCensorship)
+            maybeSetCensorship(chan);
 
         tweets.splice(index, 1);
-        return false;
+        return utils.ABORT;
     }
 
     var privateMessage = from === chan;
 
-    if (privateMessage || message.indexOf(NICK) > 0) {
+    if (privateMessage || message.indexOf(NICK) >= 0) {
         getTweet().then(function (tweet) {
             say(chan, tweet);
-            setCensorship(chan);
+            if (maybeSetCensorship)
+                maybeSetCensorship(chan);
         }).catch(function(err) {
             say(OWNER, 'Internal error:' + err)
         });
-        return false;
+        return utils.ABORT;
     }
 
-    return true;
+    return utils.CARRY_ON;
 }
 
 module.exports = function(context, params) {
-
     for (var i = 0; i < KNOWN_FRAMEWORKS.length; i++) {
         var fw = KNOWN_FRAMEWORKS[i];
         KNOWN_KEYWORDS.push(fw + 'js');
@@ -138,13 +139,11 @@ module.exports = function(context, params) {
         log('error when preloading tweets:', err.message, err.stack);
     });
 
-    setCensorship = typeof context.exports.censorship === 'object' ?
-        function(chan) {
+    if (params.censorship && typeof context.exports.censorship === 'object') {
+        maybeSetCensorship = function(chan) {
             return context.exports.censorship.set(chan);
-        } :
-        function() {
-            // noop.
         };
+    }
 
     return {
         exports: {
@@ -152,7 +151,7 @@ module.exports = function(context, params) {
             help: HELP
         },
         listeners: {
-            message: horsejs
+            message: onMessage
         }
     }
 }
