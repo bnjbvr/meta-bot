@@ -19,6 +19,13 @@ module.exports = {
             enabled: true, // if enabled, will react on !help messages.
         },
         {
+            name: 'old-url',
+            enabled: true, // if enabled, will let you know every time an URL has already been posted.
+            params: {
+                filename: 'data/old.data'
+            }
+        },
+        {
             name: 'preview-url',
             enabled: true // if enabled, will fetch the title of URLs written by people in the channel.
         },
