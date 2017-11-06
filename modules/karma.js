@@ -21,10 +21,6 @@ function loadKarmas() {
     }
 }
 
-function writeKarmas() {
-    utils.writeFileAsync(FILENAME, KARMAS);
-}
-
 function findWho(msg, sep) {
     var who = msg.split(sep);
     if (!who.length)
@@ -41,53 +37,51 @@ function getKarma(who) {
 }
 
 function applyKarma(who, val) {
-    var modifier = val === '++' ? +1 : -1;
-    KARMAS[who] = getKarma(who) + modifier;
-    writeKarmas();
+    KARMAS[who] = getKarma(who) + val;
+    utils.writeFileAsync(FILENAME, KARMAS);
 }
 
-function applyKarmaAndBlock(from, who, val) {
-    applyKarma(who, val);
-
-    var key = from + '-' + who;
-    BLOCKED[key] = true;
-    setTimeout(function() {
-        delete BLOCKED[key];
-    }, DEBOUNCING_RATE);
-}
-
-function isBlocked(from, who) {
-    return typeof BLOCKED[from + '-' + who] !== 'undefined';
-}
+var R_KARMA = /^!karma (\S+)/;
+var R_PLUS = /(?!.*(\+)\1{2})(\S+)(\+){2}/;
+var R_MINUS = /(?!.*(-)\1{2})(\S+)(\-){2}/;
 
 function onMessage(say, from, chan, message) {
     var who;
 
-    if (message.indexOf('!karma') === 0) {
-        who = message.split('!karma')[1];
-        if (!who)
+    var tryQ = R_KARMA.exec(message);
+    if (tryQ !== null) {
+        who = tryQ[1];
+        if (!who || !who.length)
             return CARRY_ON;
-
-        who = who.trim().split(' ')[0];
-        if (!who)
-            return CARRY_ON;
-
         say(chan, who + " has a karma of " + getKarma(who));
         return ABORT;
     }
 
-    var actions = ['++', '--'];
+    var actions = [R_PLUS, R_MINUS];
     for (let action of actions) {
-        if (message.indexOf(action) === -1) {
+        var tryR = action.exec(message);
+        if (tryR === null) {
             continue;
         }
 
-        who = findWho(message, action);
-        if (typeof who === 'undefined' || from === who || isBlocked(from, who)) {
+        who = tryR[2];
+        if (
+            typeof who === 'undefined' ||
+            !who.length ||
+            from === who ||
+            typeof BLOCKED[from + '-' + who] !== 'undefined'
+        ) {
             return CARRY_ON;
         }
 
-        applyKarmaAndBlock(from, who, action);
+        applyKarma(who, action === R_PLUS ? 1 : -1);
+
+        var key = from + '-' + who;
+        BLOCKED[key] = true;
+        setTimeout(function() {
+            delete BLOCKED[key];
+        }, DEBOUNCING_RATE);
+
         return ABORT;
     }
 
@@ -109,10 +103,10 @@ module.exports = function(context, params) {
         },
         exports: {
             plusplus(somebody) {
-                applyKarma(somebody, '++');
+                applyKarma(somebody, 1);
             },
             minusminus(somebody) {
-                applyKarma(somebody, '--');
+                applyKarma(somebody, -1);
             },
             description: "Counts karma (i.e. instances of pseudo++ and pseudo--).",
             help: "- Whenever you add ++ or -- to a given name, it will affect this user's karma as saved in the database.\n" +
