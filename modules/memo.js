@@ -84,6 +84,12 @@ function onJoin(say, chan, nick, message) {
     releaseMemos(say, chan, nick);
 }
 
+function onNickChange(say, oldNick, newNick, chan, message) {
+    if (oldNick === BOT_NICK || newNick === BOT_NICK)
+        return;
+    releaseMemos(say, chan, newNick);
+}
+
 module.exports = function(context, params) {
     FILENAME = params.filename || 'memo.dat';
     MEMOS = JSON.parse(utils.readFile(FILENAME) || '{}');
@@ -102,6 +108,7 @@ module.exports = function(context, params) {
         listeners: {
             message: onMessage,
             join: onJoin,
+            nick: onNickChange,
             names: onNames
         },
         description: "Give a way to store memos for people to read later when they reconnect.",
