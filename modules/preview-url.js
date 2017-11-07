@@ -55,7 +55,9 @@ function onMessage(say, from, chan, message) {
             return;
         }
 
-        let title = cheerio.load(body)('head title').text();
+        const $ = cheerio.load(body);
+        const title = $('head meta[property="og:title"]').attr('content')
+            || $('head title').text();
         if (!title.length) {
             return;
         }
