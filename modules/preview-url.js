@@ -24,8 +24,8 @@ function cleanURL(url) {
 }
 
 function onMessage(say, from, chan, message) {
-    if (message.indexOf("#nospoil") != -1) {
-      return;   
+    if (message.indexOf("#nospoil") !== -1) {
+        return;   
     }
     let tryRegexp = URL_REGEXP.exec(message);
     if (tryRegexp === null)
