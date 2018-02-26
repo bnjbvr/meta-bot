@@ -34,6 +34,18 @@ function cleanURL(url) {
     return cleanedURL;
 }
 
+const TWITTER_REGEXP = /^http(s)?:\/\/(www\.)?twitter.com/;
+
+function findTitle(url, $) {
+    if (TWITTER_REGEXP.exec(url)) {
+        // Title is more informative on twitter tweets.
+        return $('head title').text();
+    }
+
+    return $('head meta[property="og:title"]').attr('content') ||
+           $('head title').text();
+}
+
 function onMessage(say, from, chan, message) {
     if (message.indexOf("#nospoil") !== -1) {
         return;
@@ -72,8 +84,7 @@ function onMessage(say, from, chan, message) {
         }
 
         const $ = cheerio.load(body);
-        const title = $('head meta[property="og:title"]').attr('content')
-            || $('head title').text();
+        const title = findTitle(url, $);
         if (!title.length) {
             return;
         }
