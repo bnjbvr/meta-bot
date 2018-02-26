@@ -13,13 +13,24 @@ var oldMap = {};
 
 function cleanURL(url) {
     let cleanedURL = url;
+
+    // Remove everything after # if present.
     let hashPos = url.indexOf('#');
     if (hashPos >= 0) {
         cleanedURL = url.substr(0, hashPos);
     }
-    if (!cleanedURL.endsWith('/')) {
+
+    // Add trailing slash if there's no ? and . in the last block after the
+    // last forward slash.
+    let split = url.split('/');
+    let lastSplit = split[split.length - 1];
+    if (lastSplit.indexOf('?') === -1 &&
+        lastSplit.indexOf('.') === -1 &&
+        !cleanedURL.endsWith('/'))
+    {
         cleanedURL += '/';
     }
+
     return cleanedURL;
 }
 
