@@ -21,7 +21,8 @@ function onMessage(say, from, chan, message) {
 }
 
 module.exports = function(context, params) {
-  OWNER = params.owner;
+  // Allow "owner", for backward compatibility.
+  OWNER = params.client || params.owner;
 
   if (typeof OWNER === "undefined") {
     log('Bodyguard expects a param called "owner", aborting setup.');

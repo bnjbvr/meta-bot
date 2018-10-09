@@ -36,7 +36,7 @@ filename="data/karma.dat"
 debouncing_rate=5000
 
 [modules.bodyguard]
-owner="bnjbvr" # TODO rename this to client
+client="bnjbvr"
 
 [modules.memo]
 filename="data/memo.dat"
