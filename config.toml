@@ -10,7 +10,7 @@ realName='chevaljs'
 enabled=[
     "help", # React on help messages.
     "preview-url", # Fetches the title of URLs written by people in the channel.
-    "ignored", # Ignore specific users.
+    "ignore", # Ignore specific users.
     "karma", # Keeps track of karma (++, --).
     "bodyguard", # -- those who ++ the bodyguard's client.
     "memo", # Keeps memos for other people.
