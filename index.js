@@ -148,4 +148,8 @@ function run(config) {
   }
 }
 
-run(makeConfig("config.toml"));
+(function() {
+  let args = require("yargs-parser")(process.argv.slice(2));
+  let configFileName = args.config || "config.toml";
+  run(makeConfig(configFileName));
+})();
