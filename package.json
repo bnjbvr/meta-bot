@@ -9,7 +9,9 @@
   "author": "Benjamin Bouvier <public@benj.me>",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "1.18.3",
     "cheerio": "1.0.0-rc.2",
+    "express": "4.16.3",
     "irc": "0.5.2",
     "request": "2.88.0",
     "toml": "2.3.3",

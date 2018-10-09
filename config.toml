@@ -16,6 +16,8 @@ enabled=[
     "memo", # Keeps memos for other people.
     "quote", # Keeps a registry of fortunes.
     "censorship", # Shuts up after saying something according to rules.
+    "gitlab-notifications", # IRC notifications for Gitlab.
+    "gitlab-helpers", # IRC notifications for Gitlab.
     "horse", # The famous horse.js quotes.
 ]
 
@@ -50,3 +52,14 @@ defaultPeriod=10000
 [modules.horse]
 preloadTweets=1 # Number of tweets to preload.
 censorship=true # Should it self-censor after saying something?
+
+[modules.gitlab-notifications]
+host="127.0.0.1"
+port=1337
+reports={ u_bnjbvr = ['push', 'merge_request', 'issue', 'build'], c_horsejs = ['push', 'merge_request', 'issue', 'build'], }
+branches=["master"]
+lstu=""
+
+[modules.gitlab-helpers]
+projectUrl="https://framagit.org/kresusapp/kresus"
+cacheDuration=15

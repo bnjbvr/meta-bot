@@ -40,6 +40,7 @@ function registerModule(context, listeners, name, params) {
     console.error(
       `Unable to load module ${name}. Are you sure it exists or it is well defined?`
     );
+    console.error(err);
     return;
   }
 
@@ -77,13 +78,11 @@ function triggerAfterRegister(context) {
 }
 
 function setupListener(context, client, key, descs) {
-  let say = client.say.bind(client);
-
   log("Setting up listener", key);
 
   client.on(key, function() {
     // Pass the 'say' function and the listener arguments.
-    var args = [say].concat([].slice.call(arguments));
+    var args = [context.say].concat([].slice.call(arguments));
 
     // Special treatments.
     if (key === "message") {
@@ -131,7 +130,8 @@ function run(config) {
     owner: config.irc.owner,
     nick: config.irc.nick,
     exports: {},
-    afterRegister: []
+    afterRegister: [],
+    say: client.say.bind(client)
   };
 
   // Maps event => [{ name: String, funcs: [Function]}]
