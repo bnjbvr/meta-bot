@@ -1,0 +1,52 @@
+[irc]
+server="irc.freenode.org"
+channels=["#horsejs"]
+owner='bnjbvr'
+nick='chevaljs'
+userName='chevaljs'
+realName='chevaljs'
+
+[modules]
+enabled=[
+    "help", # React on help messages.
+    "preview-url", # Fetches the title of URLs written by people in the channel.
+    "ignored", # Ignore specific users.
+    "karma", # Keeps track of karma (++, --).
+    "bodyguard", # -- those who ++ the bodyguard's client.
+    "memo", # Keeps memos for other people.
+    "quote", # Keeps a registry of fortunes.
+    "censorship", # Shuts up after saying something according to rules.
+    "horse", # The famous horse.js quotes.
+]
+
+[modules.preview-url]
+old=true # Will let you know everytime a link had already been posted.
+oldFilename="data/old.dat"
+
+[modules.ignore]
+ignorees=[
+    "bnjbvr|ignored"
+]
+bots=true # Ignore people with "bot" in their name.
+
+[modules.karma]
+filename="data/karma.dat"
+debouncing_rate=5000
+
+[modules.bodyguard]
+owner="bnjbvr" # TODO rename this to client
+
+[modules.memo]
+filename="data/memo.dat"
+
+[modules.quote]
+filename="data/quotes.dat"
+backlog_memory=10
+
+[modules.censorship]
+periodMaps={ horsejs = 5000 }
+defaultPeriod=10000
+
+[modules.horse]
+preloadTweets=1 # Number of tweets to preload.
+censorship=true # Should it self-censor after saying something?

@@ -1,16 +1,25 @@
 var irc = require('irc');
+var fs = require('fs');
 var path = require('path');
-
+var toml = require('toml');
 var utils = require('./utils');
-var config = require('./config');
 
 var log = utils.makeLogger('main');
 
-function registerModule(context, listeners, desc) {
-    if (!desc.enabled)
-        return;
+function makeConfig(filename) {
+    var config;
+    try {
+        config = toml.parse(fs.readFileSync(filename, 'utf8'));
+    } catch (err) {
+        console.error(`Can't parse config.toml file, please fix it (line ${err.line}, column ${err.column})`);
+        console.error(err.message);
+        process.exit(-1);
+    }
+    return config;
+}
 
-    var relativePath = path.join('modules', desc.name);
+function registerModule(context, listeners, name, params) {
+    var relativePath = path.join('modules', name);
 
     // Each module returns an object with the shape:
     // {
@@ -20,7 +29,13 @@ function registerModule(context, listeners, desc) {
     //  }
     //  exports: { }
     // }
-    var module = require('./' + relativePath)(context, desc.params);
+    var module;
+    try {
+        module = require('./' + relativePath)(context, params);
+    } catch (err) {
+        console.error(`Unable to load module ${name}. Are you sure it exists or it is well defined?`);
+        return;
+    }
 
     module.listeners = module.listeners || {};
 
@@ -36,11 +51,11 @@ function registerModule(context, listeners, desc) {
 
         // Pushes an entry describing the module functions to call.
         listeners[key].push({
-            name: desc.name,
+            name: name,
             funcs: funcs
         });
 
-        context.exports[desc.name] = module.exports;
+        context.exports[name] = module.exports;
     }
 
     if (typeof module.afterRegister === 'function') {
@@ -95,17 +110,17 @@ function setupListener(context, client, key, descs) {
 
 function run(config)
 {
-    let client = new irc.Client(config.server, config.nick, {
+    let client = new irc.Client(config.irc.server, config.irc.nick, {
         debug: true,
-        channels: config.channels,
-        userName: config.userName,
-        realName: config.realName,
+        channels: config.irc.channels,
+        userName: config.irc.userName,
+        realName: config.irc.realName,
         retryDelay: 120000
     });
 
     let context = {
-        owner: config.owner,
-        nick: config.nick,
+        owner: config.irc.owner,
+        nick: config.irc.nick,
         exports: {},
         afterRegister: []
     };
@@ -113,8 +128,9 @@ function run(config)
     // Maps event => [{ name: String, funcs: [Function]}]
     let listeners = {};
 
-    for (let moduleDesc of config.modules) {
-        registerModule(context, listeners, moduleDesc);
+    for (let moduleName of config.modules.enabled) {
+        let moduleParams = config.modules[moduleName] || {};
+        registerModule(context, listeners, moduleName, moduleParams);
     }
     triggerAfterRegister(context);
 
@@ -123,4 +139,4 @@ function run(config)
     }
 }
 
-run(config);
+run(makeConfig('config.toml'));
