@@ -4,15 +4,44 @@ var CARRY_ON = utils.CARRY_ON;
 var ABORT = utils.ABORT;
 
 var log = utils.makeLogger("quote");
+var { assert, assertEq } = utils;
 
 var QUOTES = {};
 var FILENAME = "";
 var BACKLOG = {};
 var BACKLOG_MEMORY;
 
-var ADD_QUOTE_REGEXP = /^!aq (\S*) (\S*)\s*$/;
-var REMOVE_QUOTE_REGEXP = /^!rq (\S*)\s*$/;
-var QUOTE_REGEXP = /^!q (\S*)( (\S*))?\s*$/;
+var ADD_QUOTE_REGEXP = /^!aq\s+(\S*)\s+(\S*)\s*.*$/;
+var REMOVE_QUOTE_REGEXP = /^!rq\s+(\S*)\s*.*$/;
+var QUOTE_REGEXP = /^!q\s+(\S*)(\s+(\S*))?\s*.*$/;
+
+(function testOnStartup() {
+  var found = ADD_QUOTE_REGEXP.exec("!aqpadenot flou fou");
+  assertEq(found, null);
+
+  var found = ADD_QUOTE_REGEXP.exec("!aqpadenot flou");
+  assertEq(found, null);
+
+  var found = ADD_QUOTE_REGEXP.exec("!aq padenot flou");
+  assert(found !== null);
+  assertEq(found[1], "padenot");
+  assertEq(found[2], "flou");
+
+  var found = ADD_QUOTE_REGEXP.exec("!aq padenot flou ");
+  assert(found !== null);
+  assertEq(found[1], "padenot");
+  assertEq(found[2], "flou");
+
+  var found = ADD_QUOTE_REGEXP.exec("!aq    padenot  flou   ");
+  assert(found !== null);
+  assertEq(found[1], "padenot");
+  assertEq(found[2], "flou");
+
+  var found = ADD_QUOTE_REGEXP.exec("!aq    jeej  suus ah");
+  assert(found !== null);
+  assertEq(found[1], "jeej");
+  assertEq(found[2], "suus");
+})();
 
 function onMessage(say, from, chan, message) {
   var tryAQ = ADD_QUOTE_REGEXP.exec(message);

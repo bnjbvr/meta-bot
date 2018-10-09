@@ -33,3 +33,15 @@ exports.makeLogger = function(prefix) {
     console.log.apply(console, args);
   };
 };
+
+exports.assert = function(x) {
+  if (!x) {
+    throw new Error("Assertion error!");
+  }
+};
+
+exports.assertEq = function(x, y) {
+  if ((x !== x && y === y) || (x === 0 && 1 / x !== 1 / y) || x !== y) {
+    throw new Error(`Assertion error! Expected ${x}, seen ${y}`);
+  }
+};
