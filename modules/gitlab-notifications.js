@@ -60,7 +60,7 @@ module.exports = function(context, params) {
         );
       }
 
-      (hookToChannel[hook] = hookToChannel[hook] || []).push(who);
+      (hookToChannel[hook] = hookToChannel[hook] || []).push(actual_who);
     }
   }
 
