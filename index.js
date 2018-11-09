@@ -117,6 +117,43 @@ function setupListener(context, client, key, descs) {
   });
 }
 
+function throttle(func) {
+    const THROTTLE_EVERY = 5;
+    const THROTTLE_TIME = 1000;
+
+    let clientSay = func;
+
+    let counter = 0;
+    let stack = [];
+    let timeout = null;
+
+    let throttled = function (...rest) {
+        stack.push(rest);
+        emptyStack();
+    };
+
+    function emptyStack() {
+        if (timeout) {
+            return;
+        }
+        for (; stack.length && counter < THROTTLE_EVERY; counter++) {
+            let oldest = stack.shift();
+            clientSay(...oldest);
+        }
+        if (!stack.length) {
+            return;
+        }
+        let time = THROTTLE_TIME + (Math.random() < 0.5 ? -1 : 1) * Math.random() * 500 | 0;
+        timeout = setTimeout(function() {
+            timeout = null;
+            counter -= THROTTLE_EVERY;
+            emptyStack();
+        }, time);
+    }
+
+    return throttled;
+}
+
 function run(config) {
   let client = new irc.Client(config.irc.server, config.irc.nick, {
     debug: true,
@@ -131,7 +168,7 @@ function run(config) {
     nick: config.irc.nick,
     exports: {},
     afterRegister: [],
-    say: client.say.bind(client)
+    say: throttle(client.say.bind(client))
   };
 
   // Maps event => [{ name: String, funcs: [Function]}]
