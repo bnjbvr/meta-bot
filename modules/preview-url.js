@@ -106,7 +106,7 @@ function onMessage(say, from, chan, message) {
     }
   });
 
-  return utils.ABORT;
+  return utils.CARRY_ON;
 }
 
 module.exports = function(context, params) {
