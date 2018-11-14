@@ -111,10 +111,12 @@ module.exports = function(context, params) {
       nick: onNickChange,
       names: onNames
     },
-    description:
-      "Give a way to store memos for people to read later when they reconnect.",
-    help:
-      "- To push a memo to the user SOMEBODY with content 'HELLO YOU', do !memo SOMEBODY HELLO YOU\n" +
-      "The next time the user will reconnect, the memo will be publicly released in the same channel as you saved it and addressed to this person."
+    exports: {
+      description:
+        "Give a way to store memos for people to read later when they reconnect.",
+      help:
+        "- To push a memo to the user SOMEBODY with content 'HELLO YOU', do !memo SOMEBODY HELLO YOU\n" +
+        "The next time the user will reconnect, the memo will be publicly released in the same channel as you saved it and addressed to this person."
+    }
   };
 };
