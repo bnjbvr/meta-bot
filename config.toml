@@ -43,7 +43,7 @@ filename="data/memo.dat"
 
 [modules.quote]
 filename="data/quotes.dat"
-backlog_memory=10
+backlog_memory=100
 
 [modules.censorship]
 periodMaps={ horsejs = 5000 }
