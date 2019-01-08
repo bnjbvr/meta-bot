@@ -63,3 +63,4 @@ lstu=""
 [modules.gitlab-helpers]
 projectUrl="https://framagit.org/kresusapp/kresus"
 cacheDuration=15
+channel="#kresus"

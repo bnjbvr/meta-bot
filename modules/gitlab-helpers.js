@@ -40,6 +40,10 @@ module.exports = function(context, params) {
 };
 
 function onMessage(say, from, chan, message) {
+  if (chan !== PARAMS.channel) {
+    return;
+  }
+
   CHAN_MESSAGE_COUNTERS[chan] = (CHAN_MESSAGE_COUNTERS[chan] || 0) + 1;
 
   var matches = null;
